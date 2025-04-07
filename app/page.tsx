@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Papa from 'papaparse';
 import { db } from './lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { Dialog, Button } from '@mui/material';
+import { Dialog,DialogTitle, Button,TextField } from '@mui/material';
 
 export default function UploadPage() {
     const [title, setTitle] = useState('');
@@ -56,19 +56,18 @@ export default function UploadPage() {
     return (
         <div style={{ padding: 20 }}>
             <Button variant="outlined" onClick={handleOpenImportDialog}>
-                単語帳をアップロード
+                新規作成
             </Button>
             <Dialog open={importDialogOpen} onClose={handleCloseImportDialog}>
-                <h1>単語帳をアップロード</h1>
-                <input
-                    type="text"
+                <DialogTitle>単語帳を作成</DialogTitle>
+                <TextField
                     placeholder="タイトル"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                 />
                 <br />
-                <textarea
-                    placeholder="説明"
+                <TextField
+                    placeholder="一言で説明"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
@@ -77,7 +76,8 @@ export default function UploadPage() {
                 <br />
                 <input type="file" accept=".csv" onChange={handleFileChange} />
                 <br />
-                <button onClick={handleUpload}>アップロード</button>
+                <Button onClick={handleUpload}>アップロード</Button>
+                <Button onClick={handleCloseImportDialog}>キャンセル</Button>
             </Dialog>
             <a href="/management">management</a>
         </div>
