@@ -3,7 +3,15 @@ import { useState } from 'react';
 import Papa from 'papaparse';
 import { db } from './lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { Dialog,DialogTitle, Button,TextField } from '@mui/material';
+import {
+    Dialog,
+    DialogTitle,
+    Button,
+    TextField,
+    DialogContent,
+    DialogActions,
+    Box,
+} from '@mui/material';
 import Management from './_components/management';
 
 export default function UploadPage() {
@@ -55,32 +63,46 @@ export default function UploadPage() {
     };
 
     return (
-        <div style={{ padding: 20 }}>
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
             <Button variant="outlined" onClick={handleOpenImportDialog}>
                 新規作成
             </Button>
-            <Dialog open={importDialogOpen} onClose={handleCloseImportDialog}>
+
+            <Dialog open={importDialogOpen} onClose={handleCloseImportDialog} fullWidth maxWidth="sm">
                 <DialogTitle>単語帳を作成</DialogTitle>
-                <TextField
-                    placeholder="タイトル"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                />
-                <br />
-                <TextField
-                    placeholder="一言で説明"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    style={{ width: 300 }}
-                />
-                <br />
-                <input type="file" accept=".csv" onChange={handleFileChange} />
-                <br />
-                <Button onClick={handleUpload}>アップロード</Button>
-                <Button onClick={handleCloseImportDialog}>キャンセル</Button>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            placeholder="タイトル"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            fullWidth
+                        />
+                        <TextField
+                            placeholder="一言で説明"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            multiline
+                            rows={3}
+                            fullWidth
+                        />
+                        <input type="file" accept=".csv" onChange={handleFileChange} />
+                    </Box>
+                </DialogContent>
+
+                <DialogActions sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: 1, px: 3, pb: 2 }}>
+                    <Button fullWidth={true} variant="contained" onClick={handleUpload}>
+                        アップロード
+                    </Button>
+                    <Button fullWidth={true} variant="outlined" onClick={handleCloseImportDialog}>
+                        キャンセル
+                    </Button>
+                </DialogActions>
             </Dialog>
-            <Management />
-        </div>
+
+            <Box mt={4}>
+                <Management />
+            </Box>
+        </Box>
     );
 }

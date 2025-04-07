@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Card, Typography, Button, Checkbox } from '@mui/material';
+import {
+  Box,
+  Card,
+  Typography,
+  Button,
+  Switch,
+  Stack,
+  Divider,
+} from '@mui/material';
 
 type Question = {
   problem: string;
@@ -21,7 +29,6 @@ type SetData = {
 export default function FlashSetPage() {
   const params = useParams();
   const id = params?.Id as string;
-  console.log('params:', params);
   const [setData, setSetData] = useState<SetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [count, setCount] = useState(0);
@@ -31,23 +38,18 @@ export default function FlashSetPage() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('useEffect実行: id =', id);
     if (!id) {
-      console.warn('IDが取得できていません');
       setLoading(false);
       return;
     }
-  
+
     const fetchData = async () => {
       try {
         const docRef = doc(db, 'sets', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data() as Omit<SetData, 'id'>;
-          console.log('データ取得成功:', data);
           setSetData({ id: docSnap.id, ...data });
-        } else {
-          console.error('データが見つかりません');
         }
       } catch (error) {
         console.error('データ取得エラー:', error);
@@ -55,81 +57,96 @@ export default function FlashSetPage() {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, [id]);
 
-  if (loading) return <p>読み込み中...</p>;
-  if (!setData) return <p>データが存在しません</p>;
+  if (loading) return <Typography>読み込み中...</Typography>;
+  if (!setData) return <Typography>データが存在しません</Typography>;
 
   const handleNextQuestion = () => {
-    setCount((prevCount) => (prevCount + 1) % setData.questions.length);
-    setShowAnswer(false); 
     if (random) {
-      setCount(Math.floor(Math.random() * setData.questions.length));
-    }
-  };
-  
-  const handlePrevQuestion = () => {
-    setCount((prevCount) => (prevCount - 1 + setData.questions.length) % setData.questions.length);
-    setShowAnswer(false); 
-    if (random) {
-      setCount(Math.floor(Math.random() * setData.questions.length));
-    }
-  };
-
-  const handleShowAnswer = () => {
-    setShowAnswer((prevShowAnswer) => !prevShowAnswer);
-  };
-
-  const handleRandom = () => {
-    setRandom((prevRandom) => !prevRandom);
-    if (!random) {
       setCount(Math.floor(Math.random() * setData.questions.length));
     } else {
-      setCount(0);
+      setCount((prev) => (prev + 1) % setData.questions.length);
     }
+    setShowAnswer(false);
   };
 
-  // 新規ボタン押下で /select/[Id]/page.tsx に遷移するハンドラー
+  const handlePrevQuestion = () => {
+    if (random) {
+      setCount(Math.floor(Math.random() * setData.questions.length));
+    } else {
+      setCount((prev) => (prev - 1 + setData.questions.length) % setData.questions.length);
+    }
+    setShowAnswer(false);
+  };
+
+  const toggleAnswer = () => setShowAnswer((prev) => !prev);
+
+  const toggleRandom = () => {
+    setRandom((prev) => !prev);
+    setCount(prev => random ? 0 : Math.floor(Math.random() * setData.questions.length));
+  };
+
   const handleNavigateToSelect = () => {
     router.push(`/select/${setData.id}`);
   };
 
+  const currentQuestion = setData.questions[count];
+
   return (
-    <div style={{ padding: 20 }}>
-      <h1>{setData.title}</h1>
-      <p>{setData.description}</p>
-      <Card style={{ margin: '16px 0', padding: 16, cursor: 'pointer' }} onClick={handleShowAnswer}>
-        <Typography variant="h6">問題 {count + 1}</Typography>
-        {showAnswer ? (
-          <Typography>答え: {setData.questions[count].answer}</Typography>
-        ) : (
-          <Typography>問題: {setData.questions[count].problem}</Typography>
-        )}
-        <Typography style={{ marginTop: 8, color: 'gray' }}>
+    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 600, mx: 'auto' }}>
+      <Typography variant="h4" gutterBottom>{setData.title}</Typography>
+      <Typography variant="body1" color="text.secondary" gutterBottom>
+        {setData.description}
+      </Typography>
+
+      <Card
+        sx={{
+          p: 3,
+          mt: 3,
+          mb: 2,
+          cursor: 'pointer',
+          backgroundColor: showAnswer ? '#f9fbe7' : '#e3f2fd',
+        }}
+        onClick={toggleAnswer}
+      >
+        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+          問題 {count + 1} / {setData.questions.length}
+        </Typography>
+        <Typography variant="h6">
+          {showAnswer ? `答え：${currentQuestion.answer}` : `問題：${currentQuestion.problem}`}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
           {showAnswer ? 'クリックして答えを隠す' : 'クリックして答えを見る'}
         </Typography>
       </Card>
 
-      <Button variant="outlined" onClick={handlePrevQuestion}>
-        前の問題
+      <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ my: 2, flexWrap: 'wrap' }}>
+        <Button variant="outlined" onClick={handlePrevQuestion}>前</Button>
+        <Typography>{count + 1}/{setData.questions.length}</Typography>
+        <Button variant="outlined" onClick={handleNextQuestion}>次</Button>
+      </Stack>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Switch checked={random} onChange={toggleRandom} />
+        <Typography>ランダム表示</Typography>
+      </Box>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={handleNavigateToSelect}
+      >
+        N択で練習する
       </Button>
-      <Typography style={{ display: 'inline', margin: '0 8px' }}>
-        {count + 1}/{setData.questions.length}
-      </Typography>
-      <Button variant="outlined" onClick={handleNextQuestion}>
-        次の問題
-      </Button>
-      <Checkbox checked={random} onChange={handleRandom} style={{ marginLeft: 16 }} />
-      <Typography display="inline">ランダム表示</Typography>
-      
-      {/* /select/[Id]/page.tsx へ遷移するボタン */}
-      <div style={{ marginTop: 16 }}>
-        <Button variant="contained" onClick={handleNavigateToSelect}>
-          N択へ
+      <Button fullWidth variant="contained" color="error" sx={{ my: 2 }} onClick={() => router.push('/')}>
+          やめる
         </Button>
-      </div>
-    </div>
+    </Box>
   );
 }
