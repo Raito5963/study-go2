@@ -67,7 +67,9 @@ export default function UploadPage() {
             <Button variant="outlined" onClick={handleOpenImportDialog}>
                 新規作成
             </Button>
-
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <h1 style={{ fontSize: '6rem', fontWeight: 'bold', color: '#1976d2'}}>Study GO</h1>
+            </div>
             <Dialog open={importDialogOpen} onClose={handleCloseImportDialog} fullWidth maxWidth="sm">
                 <DialogTitle>単語帳を作成</DialogTitle>
                 <DialogContent>
