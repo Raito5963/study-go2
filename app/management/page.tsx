@@ -46,15 +46,6 @@ export default function SetsPage() {
           <div key={set.id} style={{ marginBottom: '2rem', border: '1px solid #ccc', padding: '1rem' }}>
             <h2>{set.title}</h2>
             <p>{set.description}</p>
-            <h3>問題一覧</h3>
-            <ul>
-              {set.questions.map((q, idx) => (
-                <li key={idx}>
-                  <strong>問題:</strong> {q.problem} <br />
-                  <strong>回答:</strong> {q.answer}
-                </li>
-              ))}
-            </ul>
           </div>
         ))
       )}
