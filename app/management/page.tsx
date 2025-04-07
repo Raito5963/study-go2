@@ -59,7 +59,7 @@ export default function SetsPage() {
         }
     };
     const selectedSet = sets.find(set => set.id === openSetId);
-
+/*aaaa */
     return (
         <div style={{ padding: 20 }}>
             <h1>問題セット一覧</h1>
@@ -67,7 +67,7 @@ export default function SetsPage() {
                 <p>データがありません</p>
             ) : (
                 sets.map((set) => (
-                    <div key={set.id}>
+                    <div key={set.id}> 
                         <Card
                             style={{ marginBottom: '2rem', padding: '1rem', cursor: 'pointer' }}
                             onClick={() => handleOpenQuestionDialog(set.id)}
