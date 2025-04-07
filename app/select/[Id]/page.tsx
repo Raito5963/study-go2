@@ -170,7 +170,7 @@ export default function NSelectSetPage() {
         <Button variant="contained" color="secondary" onClick={handleFlashCardPage}>
           フラッシュカードへ
         </Button>
-        <Button variant="contained" color="error" onClick={() => router.push('/')}>
+        <Button variant="contained" color="error" sx={{mx:2}} onClick={() => router.push('/')}>
           やめる
         </Button>
       </Box>
