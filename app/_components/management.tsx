@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, } from 'react';
+import { useRouter } from 'next/navigation';
 import { collection, getDocs,deleteDoc,doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Button, Dialog, DialogTitle, Card } from '@mui/material';
@@ -59,10 +60,18 @@ export default function SetsPage() {
         }
     };
     const selectedSet = sets.find(set => set.id === openSetId);
-/*aaaa */
+
+    const router = useRouter();
+
+    const handleChangeFlash = () => {
+        router.push(`/flash/${openSetId}`);
+    }
+    const handleChangeNSelect = () => {
+        router.push(`/select/${openSetId}`);
+    }
     return (
         <div style={{ padding: 20 }}>
-            <h1>問題セット一覧</h1>
+            <h1>単語帳一覧</h1>
             {sets.length === 0 ? (
                 <p>データがありません</p>
             ) : (
@@ -82,8 +91,8 @@ export default function SetsPage() {
                 <Dialog open={Boolean(openSetId)} onClose={handleCloseQuestionDialog}>
                     <DialogTitle>{selectedSet.title}</DialogTitle>
                     <h3>{selectedSet.description}</h3>
-                    <Button onClick={handleCloseQuestionDialog}>フラッシュ</Button>
-                    <Button onClick={handleCloseQuestionDialog}>n択</Button>
+                    <Button onClick={handleChangeFlash}>フラッシュ</Button>
+                    <Button onClick={handleChangeNSelect}>n択</Button>
                     <Button onClick={handleOpenDeleteDialog}>削除</Button>
                     <Dialog open={openDeleteDialog} onClose={handleCloseQuestionDialog}>
                         <DialogTitle>削除</DialogTitle>

@@ -4,6 +4,7 @@ import Papa from 'papaparse';
 import { db } from './lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { Dialog,DialogTitle, Button,TextField } from '@mui/material';
+import Management from './_components/management';
 
 export default function UploadPage() {
     const [title, setTitle] = useState('');
@@ -79,7 +80,7 @@ export default function UploadPage() {
                 <Button onClick={handleUpload}>アップロード</Button>
                 <Button onClick={handleCloseImportDialog}>キャンセル</Button>
             </Dialog>
-            <a href="/management">management</a>
+            <Management />
         </div>
     );
 }
