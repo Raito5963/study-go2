@@ -115,10 +115,20 @@ export default function NSelectSetPage() {
 
   const handleSelectNumberUp = () => {
     setSelectNumber(prev => (prev < 4 ? prev + 1 : 2));
+    if(random) {
+      setCount(Math.floor(Math.random() * setData.questions.length));
+    }else {
+      setCount(prev => (prev + 1) % setData.questions.length);
+    }
   };
 
   const handleSelectNumberDown = () => {
     setSelectNumber(prev => (prev > 2 ? prev - 1 : 4));
+    if(random) {
+      setCount(Math.floor(Math.random() * setData.questions.length));
+    }else {
+      setCount(prev => (prev + 1) % setData.questions.length);
+    }
   };
 
   const handleFlashCardPage = () => {
@@ -152,7 +162,7 @@ export default function NSelectSetPage() {
               size="large"
               onClick={() => handleAnswerClick(option)}
               disabled={buttonsDisabled}
-              sx={{ py: 2 }}
+              sx={{ py: 2 , textTransform: 'none' }}
             >
               {option}
             </Button>
