@@ -12,6 +12,7 @@ import {
   Switch,
   Stack,
   Divider,
+  useMediaQuery,
 } from '@mui/material';
 
 type Question = {
@@ -37,6 +38,7 @@ export default function FlashSetPage() {
   const [reverse, setReverse] = useState(false);
 
   const router = useRouter();
+  const isMobile = useMediaQuery('(max-width:400px)');
 
   useEffect(() => {
     if (!id) {
@@ -156,7 +158,7 @@ export default function FlashSetPage() {
         </Typography>
 
         <Typography
-          variant="h4"
+          variant={isMobile ? 'h6' : 'h4'}
           sx={{
             flexGrow: 1,
             display: 'flex',
