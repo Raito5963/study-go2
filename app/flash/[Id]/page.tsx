@@ -34,6 +34,7 @@ export default function FlashSetPage() {
   const [count, setCount] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [random, setRandom] = useState(false);
+  const [reverse, setReverse] = useState(false);
 
   const router = useRouter();
 
@@ -42,7 +43,6 @@ export default function FlashSetPage() {
       setLoading(false);
       return;
     }
-
     const fetchData = async () => {
       try {
         const docRef = doc(db, 'sets', id);
@@ -61,6 +61,22 @@ export default function FlashSetPage() {
     fetchData();
   }, [id]);
 
+  
+  useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (showAnswer) {
+        handleNextQuestion();
+      } else {
+        setShowAnswer(true);
+      }
+    }
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setData, random, count, showAnswer]);
+
+  
   if (loading) return <Typography>読み込み中...</Typography>;
   if (!setData) return <Typography>データが存在しません</Typography>;
 
@@ -82,7 +98,13 @@ export default function FlashSetPage() {
     setShowAnswer(false);
   };
 
-  const toggleAnswer = () => setShowAnswer((prev) => !prev);
+  const toggleAnswer = () => {
+    if (showAnswer) {
+      handleNextQuestion();
+    } else {
+      setShowAnswer(true);
+    }
+  };
 
   const toggleRandom = () => {
     setRandom((prev) => !prev);
@@ -96,7 +118,14 @@ export default function FlashSetPage() {
   const currentQuestion = setData.questions[count];
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 600, mx: 'auto' }}>
+    <Box
+      sx={{
+        p: { xs: 2, sm: 4 },
+        maxWidth: 600,
+        mx: 'auto',
+        userSelect: 'none', // 追加
+      }}
+    >
       <Typography variant="h4" gutterBottom>{setData.title}</Typography>
       <Typography variant="body1" color="text.secondary" gutterBottom>
         {setData.description}
@@ -109,16 +138,48 @@ export default function FlashSetPage() {
           mb: 2,
           cursor: 'pointer',
           backgroundColor: showAnswer ? '#f9fbe7' : '#e3f2fd',
+          minHeight: '40vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          height: '50vh',
         }}
         onClick={toggleAnswer}
       >
-        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+        <Typography
+          variant="subtitle1"
+          color="text.secondary"
+          gutterBottom
+          sx={{ alignSelf: 'flex-start' }}
+        >
           問題 {count + 1} / {setData.questions.length}
         </Typography>
-        <Typography variant="h6">
-          {showAnswer ? `答え：${currentQuestion.answer}` : `問題：${currentQuestion.problem}`}
+
+        <Typography
+          variant="h4"
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            my: 2,
+            textAlign: 'center',
+          }}
+        >
+          {reverse
+            ? showAnswer
+              ? currentQuestion.problem
+              : currentQuestion.answer
+            : showAnswer
+              ? currentQuestion.answer
+              : currentQuestion.problem}
         </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ alignSelf: 'flex-end', mt: 1, display: 'block' }}
+        >
           {showAnswer ? 'クリックして答えを隠す' : 'クリックして答えを見る'}
         </Typography>
       </Card>
@@ -131,7 +192,9 @@ export default function FlashSetPage() {
 
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <Switch checked={random} onChange={toggleRandom} />
-        <Typography>ランダム表示</Typography>
+        <Typography sx={{ mr: 2 }}>ランダム表示</Typography>
+        <Switch checked={reverse} onChange={() => setReverse((prev) => !prev)} />
+        <Typography>問題と答えを逆にする</Typography>
       </Box>
 
       <Divider sx={{ my: 2 }} />
