@@ -180,9 +180,13 @@ export default function FlashSetPage() {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ alignSelf: 'flex-end', mt: 1, display: 'block' }}
+          sx={{ alignSelf: 'flex-end', mt: 1, display: 'block', cursor: 'pointer' }}
+          onClick={e => {
+            e.stopPropagation();
+            setShowAnswer(prev => !prev);
+          }}
         >
-          {showAnswer ? 'クリックして答えを隠す' : 'クリックして答えを見る'}
+          {showAnswer ? 'クリックして問題に戻す' : 'クリックして答えを見る'}
         </Typography>
       </Card>
 
