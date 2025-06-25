@@ -145,6 +145,30 @@ export default function NSelectSetPage() {
       <Typography variant="h4" gutterBottom>{setData.title}</Typography>
       <Typography variant="body1" gutterBottom>{setData.description}</Typography>
 
+      {/* 回答状況表示カード */}
+      <Grid container justifyContent="center" sx={{ my: 3 }}>
+        <Box>
+          <Card sx={{ p: 2, background: '#f5f5fa', boxShadow: 3, borderRadius: 3 }}>
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              回答状況
+            </Typography>
+            <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h6">回答数: {answeredCount}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" color="success.main">正答数: {correctCount}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" color="primary.main">
+                  正答率: {answeredCount === 0 ? '0%' : `${((correctCount / answeredCount) * 100).toFixed(1)}%`}
+                </Typography>
+              </Box>
+            </Grid>
+          </Card>
+        </Box>
+      </Grid>
+
       <Card sx={{ my: 2, p: 2 }}>
         <Typography variant="h6">問題 {count + 1}</Typography>
         <Typography>{setData.questions[count].problem}</Typography>
@@ -175,40 +199,18 @@ export default function NSelectSetPage() {
         ))}
       </Grid>
 
-      {/* 回答状況表示カード */}
-      <Grid container justifyContent="center" sx={{ my: 3 }}>
-        <Box>
-          <Card sx={{ p: 2, background: '#f5f5fa', boxShadow: 3, borderRadius: 3 }}>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              回答状況
+      <Box sx={{ minHeight: 80, mt: 3, display: 'flex', alignItems: 'center', flexDirection: 'column', justifyContent: 'center' }}>
+        {feedback && (
+          <>
+            <Typography variant="h5" sx={{ color: feedback === '正解' ? 'green' : 'red' }}>
+              {feedback}
             </Typography>
-            <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-              <Box>
-                <Typography variant="h6">回答数: {answeredCount}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" color="success.main">正答数: {correctCount}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" color="primary.main">
-                  正答率: {answeredCount === 0 ? '0%' : `${((correctCount / answeredCount) * 100).toFixed(1)}%`}
-                </Typography>
-              </Box>
-            </Grid>
-          </Card>
-        </Box>
-      </Grid>
-
-      {feedback && (
-        <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-          <Typography variant="h5" sx={{ color: feedback === '正解' ? 'green' : 'red' }}>
-            {feedback}
-          </Typography>
-          <Typography variant="h6" sx={{ mt: 1 }}>
-            正解：{setData.questions[count].answer}
-          </Typography>
-        </Box>
-      )}
+            <Typography variant="h6" sx={{ mt: 1 }}>
+              正解：{setData.questions[count].answer}
+            </Typography>
+          </>
+        )}
+      </Box>
 
       <Box sx={{ mt: 4 }}>
         <Button variant="contained" color="secondary" onClick={handleFlashCardPage}>
