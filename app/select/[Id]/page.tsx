@@ -9,9 +9,9 @@ import {
   Typography,
   Button,
   Checkbox,
-  Grid,
   Box,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 
 type Question = {
   problem: string;
@@ -36,6 +36,8 @@ export default function NSelectSetPage() {
   const [selectNumber, setSelectNumber] = useState(2);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [buttonsDisabled, setButtonsDisabled] = useState(false);
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
 
   const router = useRouter();
 
@@ -95,7 +97,10 @@ export default function NSelectSetPage() {
     setButtonsDisabled(true);
 
     const correctAnswer = setData.questions[count].answer;
-    setFeedback(option === correctAnswer ? '正解' : '不正解');
+    const isCorrect = option === correctAnswer;
+    setFeedback(isCorrect ? '正解' : '不正解');
+    setAnsweredCount((prev) => prev + 1);
+    if (isCorrect) setCorrectCount((prev) => prev + 1);
 
     setTimeout(() => {
       if (random) {
@@ -153,27 +158,56 @@ export default function NSelectSetPage() {
         <Typography>ランダム表示</Typography>
       </Box>
 
-      <Grid container spacing={2}>
+      <Grid container direction="column" alignItems="center" spacing={2}>
         {options.map((option, index) => (
-          <Grid key={index}>
+          <Box key={index} sx={{ width: '80%' }}>
             <Button
               fullWidth
               variant="contained"
               size="large"
               onClick={() => handleAnswerClick(option)}
               disabled={buttonsDisabled}
-              sx={{ py: 2 , textTransform: 'none' }}
+              sx={{ py: 2, textTransform: 'none' }}
             >
               {option}
             </Button>
-          </Grid>
+          </Box>
         ))}
       </Grid>
 
+      {/* 回答状況表示カード */}
+      <Grid container justifyContent="center" sx={{ my: 3 }}>
+        <Box>
+          <Card sx={{ p: 2, background: '#f5f5fa', boxShadow: 3, borderRadius: 3 }}>
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              回答状況
+            </Typography>
+            <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h6">回答数: {answeredCount}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" color="success.main">正答数: {correctCount}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" color="primary.main">
+                  正答率: {answeredCount === 0 ? '0%' : `${((correctCount / answeredCount) * 100).toFixed(1)}%`}
+                </Typography>
+              </Box>
+            </Grid>
+          </Card>
+        </Box>
+      </Grid>
+
       {feedback && (
-        <Typography variant="h5" sx={{ mt: 3, color: feedback === '正解' ? 'green' : 'red' }}>
-          {feedback}
-        </Typography>
+        <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+          <Typography variant="h5" sx={{ color: feedback === '正解' ? 'green' : 'red' }}>
+            {feedback}
+          </Typography>
+          <Typography variant="h6" sx={{ mt: 1 }}>
+            正解：{setData.questions[count].answer}
+          </Typography>
+        </Box>
       )}
 
       <Box sx={{ mt: 4 }}>
