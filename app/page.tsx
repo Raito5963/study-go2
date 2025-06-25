@@ -47,6 +47,7 @@ export default function UploadPage() {
             });
             alert('アップロード成功！');
             handleCloseImportDialog();
+            window.location.reload(); // アップロード成功後にページをリロード
         } catch (error) {
             console.error('アップロードエラー:', error);
             alert('アップロード失敗');
