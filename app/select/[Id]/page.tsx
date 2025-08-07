@@ -26,7 +26,7 @@ import {
   ListItem,
   ListItemText,
 } from '@mui/material';
-import { ArrowLeft, Edit3, RotateCcw, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, Edit3, RotateCcw, Trophy, } from 'lucide-react';
 import Image from 'next/image';
 
 type Question = {

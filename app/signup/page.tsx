@@ -15,7 +15,6 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SignUpPage() {

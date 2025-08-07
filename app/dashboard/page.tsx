@@ -25,7 +25,7 @@ import {
   Chip,
 } from '@mui/material';
 import { BookOpen, Plus, MoreVertical, User, LogOut, Share2, Trash2, HelpCircle } from 'lucide-react';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Papa from 'papaparse';
 import Image from 'next/image';
