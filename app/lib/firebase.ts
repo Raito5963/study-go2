@@ -1,6 +1,8 @@
 // lib/firebase.ts
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
 const firebaseConfig = {
   apiKey: "AIzaSyAFEQr6oAFlZhwFIVbQxn6uwAurvwrvlz8",
   authDomain: "study-go-37c39.firebaseapp.com",
@@ -11,8 +13,8 @@ const firebaseConfig = {
   measurementId: "G-HQZ5CJZC9Q"
 };
 
-
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { db };
+export { db, auth };
