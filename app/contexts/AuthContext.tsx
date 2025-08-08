@@ -11,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: () => Promise<void>;
 }
 
 interface UserProfile {
@@ -19,6 +20,7 @@ interface UserProfile {
   email: string;
   shareCode: string;
   createdAt: Date;
+  avatar?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,12 +46,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const result = await createUserWithEmailAndPassword(auth, email, password);
     const shareCode = generateShareCode();
     
-    // ユーザープロフィールをFirestoreに保存
+    // ユーザープロフィールをFirestoreに保存（デフォルトアイコンなし）
     await setDoc(doc(db, 'users', result.user.uid), {
       uid: result.user.uid,
       displayName,
       email,
       shareCode,
+      avatar: '', // 空文字でデフォルトアイコンを使用
       createdAt: new Date(),
     });
   };
@@ -61,6 +64,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     await signOut(auth);
     setUserProfile(null);
+  };
+
+  const updateUserProfile = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data() as UserProfile);
+      }
+    } catch (error) {
+      console.error('プロフィール更新エラー:', error);
+    }
   };
 
   useEffect(() => {
@@ -90,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     logout,
+    updateUserProfile,
   };
 
   return (

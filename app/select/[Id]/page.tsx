@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,9 +25,11 @@ import {
   List,
   ListItem,
   ListItemText,
+  Avatar,
 } from '@mui/material';
 import { ArrowLeft, Edit3, RotateCcw, Trophy, } from 'lucide-react';
 import Image from 'next/image';
+import DefaultUserIcon from '../../../components/DefaultUserIcon';
 
 type Question = {
   problem: string;
@@ -58,11 +60,14 @@ type UserRanking = {
   correctCount: number;
   totalAnswered: number;
   accuracy: number;
+  avatar?: string;
 };
 
 export default function SelectSetPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params?.Id as string;
+  const continueStudy = searchParams?.get('continue') === 'true';
   const { currentUser } = useAuth();
 
   const [setData, setSetData] = useState<SetData | null>(null);
@@ -115,6 +120,16 @@ export default function SelectSetPage() {
         console.log('選択肢ページ - 整理後のデータ:', safeData);
         setSetData(safeData);
 
+        // 続きから始める場合、進捗を読み込み
+        if (continueStudy && currentUser) {
+          await loadProgress(safeData);
+        }
+
+        // 続きから始める場合、進捗を読み込み
+        if (continueStudy && currentUser) {
+          await loadProgress(safeData);
+        }
+
         // 最後にアクセスした日時を更新
         if (currentUser) {
           await updateLastAccessDate();
@@ -126,6 +141,44 @@ export default function SelectSetPage() {
       console.error('データ取得エラー:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProgress = async (setData: SetData) => {
+    if (!currentUser) return;
+
+    try {
+      const progressDoc = await getDoc(
+        doc(db, 'studyProgress', `${currentUser.uid}_${id}_select`)
+      );
+      
+      if (progressDoc.exists()) {
+        const progressData = progressDoc.data();
+        setCount(Math.min(progressData.currentIndex, setData.questions.length - 1));
+      }
+    } catch (error) {
+      console.error('進捗読み込みエラー:', error);
+    }
+  };
+
+  const saveProgress = async (currentIndex: number) => {
+    if (!currentUser || !setData) return;
+
+    try {
+      await setDoc(
+        doc(db, 'studyProgress', `${currentUser.uid}_${id}_select`),
+        {
+          userId: currentUser.uid,
+          setId: id,
+          mode: 'select',
+          currentIndex,
+          totalQuestions: setData.questions.length,
+          lastStudied: new Date(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error('進捗保存エラー:', error);
     }
   };
 
@@ -195,6 +248,7 @@ export default function SelectSetPage() {
         rankingData.push({
           userId,
           displayName: userData.displayName,
+          avatar: userData.avatar || '',
           correctCount,
           totalAnswered,
           accuracy,
@@ -266,17 +320,21 @@ export default function SelectSetPage() {
   const nextQuestion = () => {
     if (!setData) return;
     
+    let newIndex;
     if (random) {
-      let newIndex;
       do {
         newIndex = Math.floor(Math.random() * setData.questions.length);
       } while (newIndex === count && setData.questions.length > 1);
-      setCount(newIndex);
     } else {
-      setCount((prev) => (prev + 1) % setData.questions.length);
+      newIndex = (count + 1) % setData.questions.length;
     }
+    
+    setCount(newIndex);
     setFeedback(null);
     setButtonsDisabled(false);
+    
+    // 進捗を保存
+    saveProgress(newIndex);
     // setStrikedOptions(new Set()); // useEffectで自動的にリセットされるため削除
   };
 
@@ -439,7 +497,7 @@ export default function SelectSetPage() {
                   border: '2px solid',
                   borderColor: isAnswered
                     ? isCorrect 
-                      ? '#4caf50' 
+                      ? '#1976d2' 
                       : isStriked 
                         ? '#9e9e9e' 
                         : '#f44336'
@@ -473,7 +531,7 @@ export default function SelectSetPage() {
                       minWidth: '32px',
                       color: isAnswered
                         ? isCorrect 
-                          ? '#4caf50' 
+                          ? '#1976d2' 
                           : '#f44336'
                         : 'text.primary'
                     }}
@@ -518,7 +576,7 @@ export default function SelectSetPage() {
                     position: 'absolute', 
                     top: 8, 
                     right: 8,
-                    color: '#4caf50'
+                    color: '#1976d2'
                   }}>
                     ✓
                   </Box>
@@ -543,7 +601,7 @@ export default function SelectSetPage() {
         <Box sx={{ minHeight: 100, mt: 3, display: 'flex', alignItems: 'center', flexDirection: 'column', justifyContent: 'center' }}>
           {feedback && (
             <>
-              <Typography variant="h4" sx={{ color: feedback === '正解' ? 'green' : 'red', mb: 2 }}>
+              <Typography variant="h4" sx={{ color: feedback === '正解' ? '#1976d2' : 'red', mb: 2 }}>
                 {feedback}
               </Typography>
               <Typography variant="h6" color="text.secondary">
@@ -610,6 +668,16 @@ export default function SelectSetPage() {
                 borderRadius: 1,
                 mb: 1,
               }}>
+                {ranking.avatar ? (
+                  <Avatar
+                    src={ranking.avatar}
+                    sx={{ width: 40, height: 40, mr: 2 }}
+                  />
+                ) : (
+                  <Box sx={{ width: 40, height: 40, mr: 2, borderRadius: '50%', overflow: 'hidden' }}>
+                    <DefaultUserIcon size={40} />
+                  </Box>
+                )}
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

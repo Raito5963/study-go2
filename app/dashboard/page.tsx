@@ -23,12 +23,14 @@ import {
   Fab,
   Alert,
   Chip,
+  Avatar,
 } from '@mui/material';
 import { BookOpen, Plus, MoreVertical, User, LogOut, Share2, Trash2, HelpCircle } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Papa from 'papaparse';
 import Image from 'next/image';
+import DefaultUserIcon from '../../components/DefaultUserIcon';
 
 interface StudySet {
   id: string;
@@ -286,9 +288,21 @@ export default function DashboardPage() {
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
-          <Typography variant="body1" sx={{ mr: 2 }}>
-            {userProfile.displayName}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {userProfile.avatar ? (
+              <Avatar
+                src={userProfile.avatar}
+                sx={{ width: 32, height: 32 }}
+              />
+            ) : (
+              <Box sx={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden' }}>
+                <DefaultUserIcon size={32} />
+              </Box>
+            )}
+            <Typography variant="body1" sx={{ mr: 1 }}>
+              {userProfile.displayName}
+            </Typography>
+          </Box>
           <IconButton
             color="inherit"
             onClick={() => setHelpDialogOpen(true)}
@@ -309,7 +323,10 @@ export default function DashboardPage() {
             open={Boolean(anchorEl)}
             onClose={() => setAnchorEl(null)}
           >
-            <MenuItem onClick={() => setAnchorEl(null)}>
+            <MenuItem onClick={() => {
+              setAnchorEl(null);
+              router.push('/profile');
+            }}>
               <User size={20} style={{ marginRight: 8 }} />
               プロフィール
             </MenuItem>
@@ -406,15 +423,11 @@ export default function DashboardPage() {
                   <CardActions>
                     <Button
                       size="small"
-                      onClick={() => router.push(`/flash/${set.id}`)}
+                      variant="contained"
+                      onClick={() => router.push(`/study-mode?setId=${set.id}`)}
+                      fullWidth
                     >
-                      フラッシュカード
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={() => router.push(`/select/${set.id}`)}
-                    >
-                      選択問題
+                      学習を開始
                     </Button>
                   </CardActions>
                 </Card>
@@ -654,8 +667,8 @@ export default function DashboardPage() {
 
               {/* Googleスプレッドシートのリンク */}
               <Box sx={{ 
-                backgroundColor: '#e8f5e8', 
-                border: '1px solid #4caf50', 
+                backgroundColor: '#e3f2fd', 
+                border: '1px solid #1976d2', 
                 borderRadius: 1, 
                 p: 2,
                 textAlign: 'center'
@@ -764,13 +777,13 @@ export default function DashboardPage() {
               <Box sx={{ 
                 flex: 1, 
                 minWidth: '200px',
-                border: '2px solid #4caf50', 
+                border: '2px solid #1976d2', 
                 borderRadius: 2, 
                 p: 2, 
                 textAlign: 'center',
-                backgroundColor: '#e8f5e8'
+                backgroundColor: '#e3f2fd'
               }}>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
                   ➡️ 右スワイプ
                 </Typography>
                 <Typography variant="body2">正解 / 覚えた</Typography>
