@@ -574,6 +574,10 @@ export default function FlashSetPage() {
                   textAlign: 'center',
                   fontFamily: '"Roboto Mono", "Courier New", monospace',
                   letterSpacing: '0.02em',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'pre-wrap',
+                  maxWidth: '100%',
                 }}
               >
                 {setData.questions[count] ? (
