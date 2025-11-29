@@ -255,44 +255,63 @@ export default function FlashSetPage() {
       
       console.log('元の画像サイズ:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       
-      // 画像を圧縮（Firestoreの制限に合わせて小さく）
-      const options = {
-        maxSizeMB: 0.3, // 300KBに制限（Base64エンコード後は約1.3倍になるため）
-        maxWidthOrHeight: 800, // 解像度を下げる
-        useWebWorker: false,
-        initialQuality: 0.7,
-      };
-      
-      const compressedFile = await imageCompression(file, options);
-      console.log('圧縮後の画像サイズ:', (compressedFile.size / 1024).toFixed(2), 'KB');
-      
-      // Base64に変換
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        const base64Size = (base64String.length * 0.75) / 1024; // KB単位
-        console.log('Base64サイズ:', base64Size.toFixed(2), 'KB');
-        
-        if (base64Size > 400) {
-          alert('画像が大きすぎます。より小さい画像を選択するか、画質を下げてください。');
-          setUploadingImage(false);
-          return;
+      // 公式ドキュメントに従ったImgurアップロード
+      const uploadWithRetry = async (retries = 3): Promise<string> => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch('https://api.imgur.com/3/image', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Client-ID 546c25a59c58ad7',
+                'User-Agent': 'StudyGO/1.0 (Next.js app)',
+              },
+              body: formData,
+            });
+            
+            const data = await response.json();
+            
+            if (response.status === 503) {
+              console.warn(`Imgurサービス一時停止 (リトライ ${i + 1}/${retries})`);
+              if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000));
+                continue;
+              }
+              throw new Error('Imgurサービスが一時的に利用できません。しばらく待ってから再度お試しください。');
+            }
+            
+            if (response.status === 429) {
+              throw new Error('アップロード制限に達しました。しばらく待ってから再度お試しください。');
+            }
+            
+            if (!response.ok) {
+              const errorMsg = data.data?.error?.message || data.data?.error || `HTTP ${response.status}`;
+              throw new Error(`アップロード失敗: ${errorMsg}`);
+            }
+            
+            if (data.success && data.data && data.data.link) {
+              console.log('アップロード成功:', data.data.link);
+              return data.data.link;
+            } else {
+              throw new Error(data.data?.error?.message || 'アップロードに失敗しました');
+            }
+          } catch (error) {
+            console.error(`アップロード試行 ${i + 1} 失敗:`, error);
+            if (i === retries - 1) throw error;
+            if (error instanceof Error && error.message.includes('制限')) throw error;
+          }
         }
-        
-        setEditImageUrl(base64String);
-        setUploadingImage(false);
+        throw new Error('リトライ上限に達しました');
       };
       
-      reader.onerror = () => {
-        console.error('ファイル読み込みエラー:', reader.error);
-        alert('画像の読み込みに失敗しました');
-        setUploadingImage(false);
-      };
-      
-      reader.readAsDataURL(compressedFile);
+      const imageUrl = await uploadWithRetry();
+      setEditImageUrl(imageUrl);
+      setUploadingImage(false);
     } catch (error) {
-      console.error('画像処理エラー:', error);
-      alert(`画像の処理に失敗しました: ${error}`);
+      console.error('アップロードエラー:', error);
+      alert(`画像のアップロードに失敗しました: ${error}`);
       setUploadingImage(false);
     }
   };
@@ -306,55 +325,74 @@ export default function FlashSetPage() {
       
       console.log('元の画像サイズ:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       
-      // 画像を圧縮（Firestoreの制限に合わせて小さく）
-      const options = {
-        maxSizeMB: 0.3, // 300KBに制限（Base64エンコード後は約1.3倍になるため）
-        maxWidthOrHeight: 800, // 解像度を下げる
-        useWebWorker: false,
-        initialQuality: 0.7,
-      };
-      
-      const compressedFile = await imageCompression(file, options);
-      console.log('圧縮後の画像サイズ:', (compressedFile.size / 1024).toFixed(2), 'KB');
-      
-      // Base64に変換
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        const base64Size = (base64String.length * 0.75) / 1024; // KB単位
-        console.log('Base64サイズ:', base64Size.toFixed(2), 'KB');
-        
-        if (base64Size > 400) {
-          alert('画像が大きすぎます。より小さい画像を選択するか、画質を下げてください。');
-          setUploadingAnswerImage(false);
-          return;
+      // 公式ドキュメントに従ったImgurアップロード
+      const uploadWithRetry = async (retries = 3): Promise<string> => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch('https://api.imgur.com/3/image', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Client-ID 546c25a59c58ad7',
+                'User-Agent': 'StudyGO/1.0 (Next.js app)',
+              },
+              body: formData,
+            });
+            
+            const data = await response.json();
+            
+            if (response.status === 503) {
+              console.warn(`Imgurサービス一時停止 (リトライ ${i + 1}/${retries})`);
+              if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000));
+                continue;
+              }
+              throw new Error('Imgurサービスが一時的に利用できません。しばらく待ってから再度お試しください。');
+            }
+            
+            if (response.status === 429) {
+              throw new Error('アップロード制限に達しました。しばらく待ってから再度お試しください。');
+            }
+            
+            if (!response.ok) {
+              const errorMsg = data.data?.error?.message || data.data?.error || `HTTP ${response.status}`;
+              throw new Error(`アップロード失敗: ${errorMsg}`);
+            }
+            
+            if (data.success && data.data && data.data.link) {
+              console.log('アップロード成功:', data.data.link);
+              return data.data.link;
+            } else {
+              throw new Error(data.data?.error?.message || 'アップロードに失敗しました');
+            }
+          } catch (error) {
+            console.error(`アップロード試行 ${i + 1} 失敗:`, error);
+            if (i === retries - 1) throw error;
+            if (error instanceof Error && error.message.includes('制限')) throw error;
+          }
         }
-        
-        setEditAnswerImageUrl(base64String);
-        setUploadingAnswerImage(false);
+        throw new Error('リトライ上限に達しました');
       };
       
-      reader.onerror = () => {
-        console.error('ファイル読み込みエラー:', reader.error);
-        alert('画像の読み込みに失敗しました');
-        setUploadingAnswerImage(false);
-      };
-      
-      reader.readAsDataURL(compressedFile);
+      const imageUrl = await uploadWithRetry();
+      setEditAnswerImageUrl(imageUrl);
+      setUploadingAnswerImage(false);
     } catch (error) {
-      console.error('画像処理エラー:', error);
-      alert(`画像の処理に失敗しました: ${error}`);
+      console.error('アップロードエラー:', error);
+      alert(`画像のアップロードに失敗しました: ${error}`);
       setUploadingAnswerImage(false);
     }
   };
 
   const handleImageDelete = () => {
-    // Base64データなので単純にクリアするだけ
+    // Imgurの匿名アップロードは削除不可のため、URLをクリアするのみ
     setEditImageUrl('');
   };
 
   const handleAnswerImageDelete = () => {
-    // Base64データなので単純にクリアするだけ
+    // Imgurの匿名アップロードは削除不可のため、URLをクリアするのみ
     setEditAnswerImageUrl('');
   };
 
