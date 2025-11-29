@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } fro
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
+import imageCompression from 'browser-image-compression';
 import {
   Box,
   Card,
@@ -31,6 +32,7 @@ import Image from 'next/image';
 type Question = {
   problem: string;
   answer: string;
+  imageUrl?: string;
 };
 
 type SetData = {
@@ -63,6 +65,8 @@ export default function FlashSetPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editProblem, setEditProblem] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
@@ -234,7 +238,64 @@ export default function FlashSetPage() {
     const currentQuestion = setData!.questions[count];
     setEditProblem(currentQuestion.problem);
     setEditAnswer(currentQuestion.answer);
+    setEditImageUrl(currentQuestion.imageUrl || '');
     setEditDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    try {
+      setUploadingImage(true);
+      
+      console.log('元の画像サイズ:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+      
+      // 画像を圧縮（Firestoreの制限に合わせて小さく）
+      const options = {
+        maxSizeMB: 0.3, // 300KBに制限（Base64エンコード後は約1.3倍になるため）
+        maxWidthOrHeight: 800, // 解像度を下げる
+        useWebWorker: false,
+        initialQuality: 0.7,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      console.log('圧縮後の画像サイズ:', (compressedFile.size / 1024).toFixed(2), 'KB');
+      
+      // Base64に変換
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        const base64Size = (base64String.length * 0.75) / 1024; // KB単位
+        console.log('Base64サイズ:', base64Size.toFixed(2), 'KB');
+        
+        if (base64Size > 400) {
+          alert('画像が大きすぎます。より小さい画像を選択するか、画質を下げてください。');
+          setUploadingImage(false);
+          return;
+        }
+        
+        setEditImageUrl(base64String);
+        setUploadingImage(false);
+      };
+      
+      reader.onerror = () => {
+        console.error('ファイル読み込みエラー:', reader.error);
+        alert('画像の読み込みに失敗しました');
+        setUploadingImage(false);
+      };
+      
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('画像処理エラー:', error);
+      alert(`画像の処理に失敗しました: ${error}`);
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImageDelete = () => {
+    // Base64データなので単純にクリアするだけ
+    setEditImageUrl('');
   };
 
   const saveEdit = async () => {
@@ -242,7 +303,17 @@ export default function FlashSetPage() {
 
     try {
       const updatedQuestions = [...setData.questions];
-      updatedQuestions[count] = { problem: editProblem, answer: editAnswer };
+      const updatedQuestion: Question = { 
+        problem: editProblem, 
+        answer: editAnswer,
+      };
+      
+      // 画像URLがある場合のみ追加（undefinedを避ける）
+      if (editImageUrl) {
+        updatedQuestion.imageUrl = editImageUrl;
+      }
+      
+      updatedQuestions[count] = updatedQuestion;
       
       await updateDoc(doc(db, 'sets', id), {
         questions: updatedQuestions
@@ -486,29 +557,79 @@ export default function FlashSetPage() {
               問題 {count + 1} / {setData.questions.length}
             </Typography>
 
-            <Typography
-              variant={isMobile ? 'h6' : 'h4'}
+            <Box
               sx={{
                 flexGrow: 1,
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 my: 2,
-                textAlign: 'center',
+                gap: 2,
               }}
             >
-              {setData.questions[count] ? (
-                reverse
-                  ? showAnswer
-                    ? setData.questions[count].problem
-                    : setData.questions[count].answer
-                  : showAnswer
-                    ? setData.questions[count].answer
-                    : setData.questions[count].problem
-              ) : (
-                '問題データが見つかりません'
+              <Typography
+                variant={isMobile ? 'h6' : 'h4'}
+                sx={{
+                  textAlign: 'center',
+                }}
+              >
+                {setData.questions[count] ? (
+                  reverse
+                    ? showAnswer
+                      ? setData.questions[count].problem
+                      : setData.questions[count].answer
+                    : showAnswer
+                      ? setData.questions[count].answer
+                      : setData.questions[count].problem
+                ) : (
+                  '問題データが見つかりません'
+                )}
+              </Typography>
+              
+              {!showAnswer && !reverse && setData.questions[count]?.imageUrl && (
+                <Box
+                  sx={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                  }}
+                >
+                  <img
+                    src={setData.questions[count].imageUrl}
+                    alt="問題画像"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
               )}
-            </Typography>
+              {showAnswer && reverse && setData.questions[count]?.imageUrl && (
+                <Box
+                  sx={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                  }}
+                >
+                  <img
+                    src={setData.questions[count].imageUrl}
+                    alt="問題画像"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
 
             <Typography
               variant="caption"
@@ -607,7 +728,53 @@ export default function FlashSetPage() {
             variant="outlined"
             value={editAnswer}
             onChange={(e) => setEditAnswer(e.target.value)}
+            sx={{ mb: 2 }}
           />
+          
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              画像
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={uploadingImage}
+              >
+                {uploadingImage ? '画像アップロード中...' : '画像を追加'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </Button>
+              {editImageUrl && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleImageDelete}
+                >
+                  画像を削除
+                </Button>
+              )}
+            </Stack>
+            {editImageUrl && (
+              <Box sx={{ mt: 2, maxWidth: '100%' }}>
+                <img
+                  src={editImageUrl}
+                  alt="プレビュー"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '200px',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd',
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>キャンセル</Button>
