@@ -572,6 +572,8 @@ export default function FlashSetPage() {
                 variant={isMobile ? 'h6' : 'h4'}
                 sx={{
                   textAlign: 'center',
+                  fontFamily: '"Roboto Mono", "Courier New", monospace',
+                  letterSpacing: '0.02em',
                 }}
               >
                 {setData.questions[count] ? (
