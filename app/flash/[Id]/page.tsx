@@ -33,6 +33,7 @@ type Question = {
   problem: string;
   answer: string;
   imageUrl?: string;
+  answerImageUrl?: string;
 };
 
 type SetData = {
@@ -66,7 +67,9 @@ export default function FlashSetPage() {
   const [editProblem, setEditProblem] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string>('');
+  const [editAnswerImageUrl, setEditAnswerImageUrl] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAnswerImage, setUploadingAnswerImage] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
@@ -239,6 +242,7 @@ export default function FlashSetPage() {
     setEditProblem(currentQuestion.problem);
     setEditAnswer(currentQuestion.answer);
     setEditImageUrl(currentQuestion.imageUrl || '');
+    setEditAnswerImageUrl(currentQuestion.answerImageUrl || '');
     setEditDialogOpen(true);
   };
 
@@ -293,9 +297,65 @@ export default function FlashSetPage() {
     }
   };
 
+  const handleAnswerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    try {
+      setUploadingAnswerImage(true);
+      
+      console.log('元の画像サイズ:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+      
+      // 画像を圧縮（Firestoreの制限に合わせて小さく）
+      const options = {
+        maxSizeMB: 0.3, // 300KBに制限（Base64エンコード後は約1.3倍になるため）
+        maxWidthOrHeight: 800, // 解像度を下げる
+        useWebWorker: false,
+        initialQuality: 0.7,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      console.log('圧縮後の画像サイズ:', (compressedFile.size / 1024).toFixed(2), 'KB');
+      
+      // Base64に変換
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        const base64Size = (base64String.length * 0.75) / 1024; // KB単位
+        console.log('Base64サイズ:', base64Size.toFixed(2), 'KB');
+        
+        if (base64Size > 400) {
+          alert('画像が大きすぎます。より小さい画像を選択するか、画質を下げてください。');
+          setUploadingAnswerImage(false);
+          return;
+        }
+        
+        setEditAnswerImageUrl(base64String);
+        setUploadingAnswerImage(false);
+      };
+      
+      reader.onerror = () => {
+        console.error('ファイル読み込みエラー:', reader.error);
+        alert('画像の読み込みに失敗しました');
+        setUploadingAnswerImage(false);
+      };
+      
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('画像処理エラー:', error);
+      alert(`画像の処理に失敗しました: ${error}`);
+      setUploadingAnswerImage(false);
+    }
+  };
+
   const handleImageDelete = () => {
     // Base64データなので単純にクリアするだけ
     setEditImageUrl('');
+  };
+
+  const handleAnswerImageDelete = () => {
+    // Base64データなので単純にクリアするだけ
+    setEditAnswerImageUrl('');
   };
 
   const saveEdit = async () => {
@@ -311,6 +371,9 @@ export default function FlashSetPage() {
       // 画像URLがある場合のみ追加（undefinedを避ける）
       if (editImageUrl) {
         updatedQuestion.imageUrl = editImageUrl;
+      }
+      if (editAnswerImageUrl) {
+        updatedQuestion.answerImageUrl = editAnswerImageUrl;
       }
       
       updatedQuestions[count] = updatedQuestion;
@@ -635,6 +698,48 @@ export default function FlashSetPage() {
                   />
                 </Box>
               )}
+              {showAnswer && !reverse && setData.questions[count]?.answerImageUrl && (
+                <Box
+                  sx={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                  }}
+                >
+                  <img
+                    src={setData.questions[count].answerImageUrl}
+                    alt="解答画像"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
+              )}
+              {!showAnswer && reverse && setData.questions[count]?.answerImageUrl && (
+                <Box
+                  sx={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                  }}
+                >
+                  <img
+                    src={setData.questions[count].answerImageUrl}
+                    alt="解答画像"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
 
             <Typography
@@ -739,7 +844,7 @@ export default function FlashSetPage() {
           
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              画像
+              問題画像
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">
               <Button
@@ -747,7 +852,7 @@ export default function FlashSetPage() {
                 component="label"
                 disabled={uploadingImage}
               >
-                {uploadingImage ? '画像アップロード中...' : '画像を追加'}
+                {uploadingImage ? '画像アップロード中...' : '問題画像を追加'}
                 <input
                   type="file"
                   hidden
@@ -761,7 +866,7 @@ export default function FlashSetPage() {
                   color="error"
                   onClick={handleImageDelete}
                 >
-                  画像を削除
+                  問題画像を削除
                 </Button>
               )}
             </Stack>
@@ -769,7 +874,52 @@ export default function FlashSetPage() {
               <Box sx={{ mt: 2, maxWidth: '100%' }}>
                 <img
                   src={editImageUrl}
-                  alt="プレビュー"
+                  alt="問題画像プレビュー"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '200px',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd',
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              解答画像
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={uploadingAnswerImage}
+              >
+                {uploadingAnswerImage ? '画像アップロード中...' : '解答画像を追加'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleAnswerImageUpload}
+                />
+              </Button>
+              {editAnswerImageUrl && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleAnswerImageDelete}
+                >
+                  解答画像を削除
+                </Button>
+              )}
+            </Stack>
+            {editAnswerImageUrl && (
+              <Box sx={{ mt: 2, maxWidth: '100%' }}>
+                <img
+                  src={editAnswerImageUrl}
+                  alt="解答画像プレビュー"
                   style={{
                     maxWidth: '100%',
                     maxHeight: '200px',
