@@ -20,7 +20,7 @@
     "firebase": "^11.6.0",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.537.0",
-    "next": "15.2.4",
+    "next": "15.2.8",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
