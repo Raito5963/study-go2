@@ -5,13 +5,13 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFEQr6oAFlZhwFIVbQxn6uwAurvwrvlz8",
-  authDomain: "study-go-37c39.firebaseapp.com",
-  projectId: "study-go-37c39",
-  storageBucket: "study-go-37c39.firebasestorage.app",
-  messagingSenderId: "124573683721",
-  appId: "1:124573683721:web:8cc72488e0fafd446d68d8",
-  measurementId: "G-HQZ5CJZC9Q"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
